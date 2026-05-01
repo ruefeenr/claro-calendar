@@ -26,7 +26,7 @@ export function AppShell({
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6">
           <div className="min-w-0">
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#7c3f24]">
-              Claro Calendar
+              Claro Kalender
             </p>
             <div className="mt-1 flex min-w-0 items-center gap-3">
               <h1 className="truncate text-2xl font-semibold">{title}</h1>
@@ -43,6 +43,12 @@ export function AppShell({
             >
               Kalender
             </Link>
+            <a
+              className="rounded-full px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-amber-100/70"
+              href="/info"
+            >
+              Infos
+            </a>
             {!setupMode ? <ProfileModalTrigger profile={currentProfile ?? null} /> : null}
 
             {!setupMode ? (

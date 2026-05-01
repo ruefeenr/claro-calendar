@@ -6,10 +6,16 @@ import { redirect } from "next/navigation";
 import { defaultAvatar } from "@/lib/avatar-options";
 import { requireUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
+import { getValidRoomIds } from "@/lib/rooms";
 import { createClient } from "@/lib/supabase/server";
 
 function getString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function getPositiveInteger(formData: FormData, key: string) {
+  const value = Number.parseInt(getString(formData, key), 10);
+  return Number.isFinite(value) && value > 0 ? value : null;
 }
 
 type CreateStayActionState = {
@@ -22,16 +28,26 @@ async function saveStay(formData: FormData): Promise<CreateStayActionState> {
   const title = getString(formData, "title");
   const startDate = getString(formData, "start_date");
   const endDate = getString(formData, "end_date");
+  const guestCount = getPositiveInteger(formData, "guest_count");
   const note = getString(formData, "note");
+  const rawRoomIds = formData.getAll("room_ids").map((value) => String(value));
+  const roomIds = getValidRoomIds(rawRoomIds);
   const participantIds = formData
     .getAll("participant_ids")
     .map((value) => String(value))
     .filter(Boolean);
 
-  if (!title || !startDate || !endDate || participantIds.length === 0) {
+  if (!title || !startDate || !endDate || !guestCount || participantIds.length === 0) {
     return {
       status: "error",
-      message: "Bitte Titel, Zeitraum und mindestens eine Person angeben.",
+      message: "Bitte Titel, Zeitraum, Gästezahl und mindestens eine Person angeben.",
+    };
+  }
+
+  if (!roomIds.length || roomIds.length !== rawRoomIds.length) {
+    return {
+      status: "error",
+      message: "Bitte mindestens ein gültiges Zimmer auswählen.",
     };
   }
 
@@ -49,7 +65,9 @@ async function saveStay(formData: FormData): Promise<CreateStayActionState> {
       title,
       start_date: startDate,
       end_date: endDate,
+      guest_count: guestCount,
       note: note || null,
+      room_ids: roomIds,
       created_by: user.id,
     })
     .select("id")
@@ -94,16 +112,33 @@ async function updateStay(formData: FormData): Promise<CreateStayActionState> {
   const title = getString(formData, "title");
   const startDate = getString(formData, "start_date");
   const endDate = getString(formData, "end_date");
+  const guestCount = getPositiveInteger(formData, "guest_count");
   const note = getString(formData, "note");
+  const rawRoomIds = formData.getAll("room_ids").map((value) => String(value));
+  const roomIds = getValidRoomIds(rawRoomIds);
   const participantIds = formData
     .getAll("participant_ids")
     .map((value) => String(value))
     .filter(Boolean);
 
-  if (!stayId || !title || !startDate || !endDate || participantIds.length === 0) {
+  if (
+    !stayId ||
+    !title ||
+    !startDate ||
+    !endDate ||
+    !guestCount ||
+    participantIds.length === 0
+  ) {
     return {
       status: "error",
-      message: "Bitte Titel, Zeitraum und mindestens eine Person angeben.",
+      message: "Bitte Titel, Zeitraum, Gästezahl und mindestens eine Person angeben.",
+    };
+  }
+
+  if (!roomIds.length || roomIds.length !== rawRoomIds.length) {
+    return {
+      status: "error",
+      message: "Bitte mindestens ein gültiges Zimmer auswählen.",
     };
   }
 
@@ -121,7 +156,9 @@ async function updateStay(formData: FormData): Promise<CreateStayActionState> {
       title,
       start_date: startDate,
       end_date: endDate,
+      guest_count: guestCount,
       note: note || null,
+      room_ids: roomIds,
     })
     .eq("id", stayId)
     .select("id")
@@ -277,11 +314,6 @@ export async function logoutAction() {
   redirect("/login?message=Abgemeldet.");
 }
 
-export async function createStayAction(formData: FormData) {
-  const result = await saveStay(formData);
-  redirect(`/calendar?message=${encodeURIComponent(result.message)}`);
-}
-
 export async function createStayModalAction(
   _previousState: CreateStayActionState,
   formData: FormData,
@@ -301,11 +333,6 @@ export async function deleteStayModalAction(
   formData: FormData,
 ) {
   return deleteStay(formData);
-}
-
-export async function updateProfileAction(formData: FormData) {
-  const result = await saveProfile(formData);
-  redirect(`/settings/profile?message=${encodeURIComponent(result.message)}`);
 }
 
 export async function updateProfileModalAction(

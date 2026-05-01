@@ -2,7 +2,7 @@ import { format } from "date-fns";
 
 import { CalendarMonthView } from "@/components/calendar-month-view";
 import { getCurrentUser } from "@/lib/auth";
-import { parseMonthParam } from "@/lib/calendar";
+import { CALENDAR_VISIBLE_MONTHS, parseMonthParam } from "@/lib/calendar";
 import { getProfiles, getStaysForMonth } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 
@@ -15,7 +15,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const month = parseMonthParam(params.month);
   const user = await getCurrentUser();
   const profiles = await getProfiles(user);
-  const stays = await getStaysForMonth(month, user);
+  const stays = await getStaysForMonth(month, user, CALENDAR_VISIBLE_MONTHS);
   const configured = isSupabaseConfigured();
 
   return (

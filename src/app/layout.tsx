@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Claro Calendar",
-  description: "Privater Familienkalender für Aufenthalte im Ferienhaus in Claro.",
+  title: "Claro Kalender",
+  description: "Rüfi Family Kalender für Claro",
 };
 
 export default function RootLayout({

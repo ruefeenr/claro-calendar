@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { X, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
@@ -17,10 +17,7 @@ import { formatMonthParam } from "@/lib/calendar";
 import type { Profile, Stay } from "@/lib/types";
 import { FamilyFullCalendar } from "@/components/family-full-calendar";
 import { NewStayForm } from "@/components/new-stay-form";
-import {
-  TicinoAccent,
-  type TicinoAccentVariant,
-} from "@/components/ticino-accent";
+import { TicinoAccent } from "@/components/ticino-accent";
 
 type CalendarMonthViewProps = {
   month: string;
@@ -58,24 +55,7 @@ const monthOptions = Array.from({ length: 12 }, (_, monthIndex) => ({
   label: format(new Date(2024, monthIndex, 1), "MMMM", { locale: de }),
   value: monthIndex,
 }));
-
-function getSeasonalAccent(monthIndex: number): {
-  variant: TicinoAccentVariant;
-} {
-  if (monthIndex >= 2 && monthIndex <= 4) {
-    return { variant: "raven" };
-  }
-
-  if (monthIndex >= 5 && monthIndex <= 7) {
-    return { variant: "palm" };
-  }
-
-  if (monthIndex >= 8 && monthIndex <= 10) {
-    return { variant: "chestnut" };
-  }
-
-  return { variant: "ibex" };
-}
+const weekdayLabels = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
 function EntryModal({
   defaultSelectedProfileId,
@@ -136,7 +116,9 @@ function EntryModal({
           }
           defaultSelectedProfileId={isEditing ? undefined : defaultSelectedProfileId}
           initialEndDate={isEditing ? stay?.end_date : selection.endDate}
+          initialGuestCount={stay?.guest_count}
           initialNote={stay?.note}
+          initialRoomIds={stay?.room_ids}
           initialStartDate={isEditing ? stay?.start_date : selection.startDate}
           initialTitle={stay?.title}
           onCancel={onClose}
@@ -162,18 +144,33 @@ export function CalendarMonthView({
 }: CalendarMonthViewProps) {
   const router = useRouter();
   const monthDate = new Date(`${month}T00:00:00`);
-  const previousMonth = formatMonthParam(subMonths(monthDate, 1));
-  const nextMonth = formatMonthParam(addMonths(monthDate, 1));
+  const [activeMonthDate, setActiveMonthDate] = useState(monthDate);
+  const previousMonth = formatMonthParam(subMonths(activeMonthDate, 1));
+  const nextMonth = formatMonthParam(addMonths(activeMonthDate, 1));
   const currentMonth = formatMonthParam(new Date());
-  const seasonalAccent = getSeasonalAccent(monthDate.getMonth());
+  const activeMonthTitle = format(activeMonthDate, "MMMM yyyy", { locale: de });
   const [modalRange, setModalRange] = useState<EntryModalSelection | null>(null);
   const [bannerMessage, setBannerMessage] = useState(initialMessage ?? "");
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
   const monthPickerRef = useRef<HTMLDivElement>(null);
   const yearOptions = Array.from({ length: 9 }, (_, index) => {
-    const startYear = monthDate.getFullYear() - 4;
+    const startYear = activeMonthDate.getFullYear() - 4;
     return startYear + index;
   });
+
+  useEffect(() => {
+    setActiveMonthDate(new Date(`${month}T00:00:00`));
+  }, [month]);
+
+  const handleVisibleMonthChange = useCallback((visibleMonth: string) => {
+    setActiveMonthDate((currentDate) => {
+      if (formatMonthParam(currentDate) === visibleMonth) {
+        return currentDate;
+      }
+
+      return new Date(`${visibleMonth}-01T00:00:00`);
+    });
+  }, []);
 
   useEffect(() => {
     if (!isMonthPickerOpen) {
@@ -232,15 +229,13 @@ export function CalendarMonthView({
 
   return (
     <section className="space-y-6">
-      <div className="ticino-soft-card rounded-3xl border p-4 sm:p-5">
+      <div
+        className="ticino-soft-card sticky top-3 z-30 rounded-3xl border p-4 shadow-lg backdrop-blur sm:p-5"
+        data-calendar-sticky-header
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="ticino-badge inline-flex items-center gap-2 rounded-full px-4 py-2 text-xl font-semibold">
-                <TicinoAccent size="sm" variant="home" />
-                Casa Claro
-                <TicinoAccent size="sm" variant={seasonalAccent.variant} />
-              </h2>
               <div className="relative" ref={monthPickerRef}>
                 <button
                   aria-expanded={isMonthPickerOpen}
@@ -248,7 +243,9 @@ export function CalendarMonthView({
                   onClick={() => setIsMonthPickerOpen((isOpen) => !isOpen)}
                   type="button"
                 >
-                  <span>{format(monthDate, "MMMM yyyy", { locale: de })}</span>
+                  <span className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
+                    {activeMonthTitle}
+                  </span>
                   <ChevronDown className="h-4 w-4 text-stone-500" />
                 </button>
 
@@ -264,10 +261,10 @@ export function CalendarMonthView({
                           onChange={(event) =>
                             navigateToMonth(
                               Number(event.target.value),
-                              monthDate.getFullYear(),
+                              activeMonthDate.getFullYear(),
                             )
                           }
-                          value={monthDate.getMonth()}
+                          value={activeMonthDate.getMonth()}
                         >
                           {monthOptions.map((option) => (
                             <option key={option.value} value={option.value}>
@@ -285,11 +282,11 @@ export function CalendarMonthView({
                           className="w-full rounded-xl border border-amber-900/15 bg-white/80 px-3 py-2 text-sm outline-none focus:border-amber-900/30"
                           onChange={(event) =>
                             navigateToMonth(
-                              monthDate.getMonth(),
+                              activeMonthDate.getMonth(),
                               Number(event.target.value),
                             )
                           }
-                          value={monthDate.getFullYear()}
+                          value={activeMonthDate.getFullYear()}
                         >
                           {yearOptions.map((year) => (
                             <option key={year} value={year}>
@@ -328,6 +325,12 @@ export function CalendarMonthView({
             </Link>
           </div>
         </div>
+
+        <div className="mt-4 grid grid-cols-7 border-t border-amber-900/10 pt-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-stone-500 sm:text-sm">
+          {weekdayLabels.map((weekday) => (
+            <span key={weekday}>{weekday}</span>
+          ))}
+        </div>
       </div>
 
       {bannerMessage ? (
@@ -341,6 +344,7 @@ export function CalendarMonthView({
         month={month}
         onCreateRange={openCreateModal}
         onEditStay={openEditModal}
+        onVisibleMonthChange={handleVisibleMonthChange}
         stays={stays}
       />
 

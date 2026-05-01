@@ -108,6 +108,10 @@ a {
   border: 0;
 }
 
+.claro-fullcalendar .fc-scrollgrid-section-header {
+  display: none;
+}
+
 .claro-fullcalendar .fc-col-header-cell {
   background: rgba(255, 247, 237, 0.88);
   padding: 0.5rem 0;
@@ -167,12 +171,23 @@ a {
   padding: 0.15rem 0.35rem;
 }
 
+.claro-fullcalendar .claro-holiday-event {
+  border-color: rgba(124, 63, 36, 0.22) !important;
+  background: rgba(244, 232, 215, 0.82) !important;
+  color: #7c3f24 !important;
+}
+
+.claro-fullcalendar .claro-holiday-event .fc-event-main {
+  color: #7c3f24;
+}
+
 .claro-event-content {
   overflow: hidden;
 }
 
 .claro-event-title,
-.claro-event-meta {
+.claro-event-meta,
+.claro-event-warning {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -186,6 +201,16 @@ a {
 .claro-event-meta {
   font-size: 0.7rem;
   opacity: 0.92;
+}
+
+.claro-event-warning {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.claro-holiday-content .claro-event-title {
+  font-weight: 700;
 }
 
 .claro-fullcalendar .fc-daygrid-more-link {

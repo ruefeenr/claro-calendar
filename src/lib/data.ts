@@ -1,9 +1,10 @@
-import { endOfMonth, format, startOfMonth } from "date-fns";
+import { addMonths, endOfMonth, format, startOfMonth } from "date-fns";
 import type { User } from "@supabase/supabase-js";
 
 import { defaultAvatar } from "@/lib/avatar-options";
 import { demoProfiles, demoStays } from "@/lib/demo-data";
 import { isSupabaseConfigured } from "@/lib/env";
+import { getValidRoomIds } from "@/lib/rooms";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile, Stay } from "@/lib/types";
 
@@ -59,20 +60,24 @@ export async function getProfiles(user: User | null) {
   return data satisfies Profile[];
 }
 
-export async function getStaysForMonth(month: Date, user: User | null) {
+export async function getStaysForMonth(
+  month: Date,
+  user: User | null,
+  visibleMonths = 1,
+) {
   if (!isSupabaseConfigured() || !user) {
     return demoStays;
   }
 
   const supabase = await createClient();
   const monthStart = format(startOfMonth(month), "yyyy-MM-dd");
-  const monthEnd = format(endOfMonth(month), "yyyy-MM-dd");
+  const monthEnd = format(endOfMonth(addMonths(month, visibleMonths - 1)), "yyyy-MM-dd");
 
   const profiles = await getProfiles(user);
 
   const { data: stays, error: staysError } = await supabase
     .from("stays")
-    .select("id, title, start_date, end_date, note, created_by")
+    .select("id, title, start_date, end_date, guest_count, note, room_ids, created_by")
     .lte("start_date", monthEnd)
     .gte("end_date", monthStart)
     .order("start_date", { ascending: true });
@@ -92,6 +97,8 @@ export async function getStaysForMonth(month: Date, user: User | null) {
   if (participantError || !participantRows) {
     return stays.map((stay) => ({
       ...stay,
+      guest_count: stay.guest_count ?? 1,
+      room_ids: getValidRoomIds(stay.room_ids ?? []),
       participants: [],
     })) satisfies Stay[];
   }
@@ -100,6 +107,8 @@ export async function getStaysForMonth(month: Date, user: User | null) {
 
   return stays.map((stay) => ({
     ...stay,
+    guest_count: stay.guest_count ?? 1,
+    room_ids: getValidRoomIds(stay.room_ids ?? []),
     participants: participantRows
       .filter((row) => row.stay_id === stay.id)
       .map((row) => profilesById.get(row.profile_id))

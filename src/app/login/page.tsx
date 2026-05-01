@@ -14,31 +14,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-stone-100 px-6 py-16">
-      <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="rounded-[2rem] bg-stone-900 p-8 text-white shadow-xl">
-          <p className="text-sm font-medium uppercase tracking-[0.25em] text-stone-300">
-            Claro Calendar
-          </p>
-          <h1 className="mt-6 text-4xl font-semibold leading-tight">
-            Privater Familienkalender für Aufenthalte in Claro.
-          </h1>
-          <p className="mt-4 max-w-xl text-base text-stone-300">
-            Jede Person hat ihr eigenes Profil. Aufenthalte können mit mehreren
-            Familienmitgliedern geplant werden, damit ihr schnell seht, wer wann im
-            Ferienhaus ist.
-          </p>
-
-          <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-lg font-semibold">MVP-Fokus</h2>
-            <ul className="mt-4 space-y-3 text-sm text-stone-300">
-              <li>Geschützter Zugang nur für eingeladene Familienmitglieder</li>
-              <li>Monatsansicht mit klarer Belegung pro Tag</li>
-              <li>Einträge mit mehreren Personen und kurzer Notiz</li>
-              <li>Profilfarbe pro Person für bessere Lesbarkeit</li>
-            </ul>
-          </div>
-        </section>
-
+      <div className="w-full max-w-md space-y-6">
+        <h1 className="text-center text-4xl font-semibold tracking-tight text-stone-900">
+          Claro Kalender
+        </h1>
         <section className="rounded-[2rem] border border-stone-200 bg-white p-8 shadow-sm">
           <h2 className="text-2xl font-semibold text-stone-900">Anmeldung</h2>
           <p className="mt-2 text-sm text-stone-600">

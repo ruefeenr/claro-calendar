@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { updateProfileAction } from "@/app/actions";
 import { defaultAvatar } from "@/lib/avatar-options";
 import {
   getProfilePresetById,
@@ -14,7 +13,7 @@ import type { Profile } from "@/lib/types";
 
 type ProfileFormProps = {
   profile: Profile | null;
-  action?: (formData: FormData) => void | Promise<void>;
+  action: (formData: FormData) => void | Promise<void>;
   compact?: boolean;
   onPresetChange?: (preset: (typeof profilePresets)[number]) => void;
   onCancel?: () => void;
@@ -23,7 +22,7 @@ type ProfileFormProps = {
 
 export function ProfileForm({
   profile,
-  action = updateProfileAction,
+  action,
   compact = false,
   onPresetChange,
   onCancel,
